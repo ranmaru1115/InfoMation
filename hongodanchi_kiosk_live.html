@@ -1,0 +1,217 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .kiosk-outer {
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    color: #fff;
+    position: relative;
+  }
+  .header {
+    background: #1b4fa0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2% 3%;
+    flex-shrink: 0;
+  }
+  .header-carrier { font-size: 1.8vw; color: #c8dff8; }
+  .header-stop { font-size: 3.8vw; font-weight: 700; color: #fff; }
+  .header-sub { font-size: 2vw; color: #c8dff8; margin-top: 2px; }
+  .clock { font-size: 6.5vw; font-family: monospace; font-weight: 700; color: #fff; }
+  .day-badge { font-size: 2vw; font-weight: 700; padding: 2px 8px; border-radius: 3px; display: inline-block; margin-top: 3px; }
+  .w { background:#1a4d1a; color:#afffaf; }
+  .s { background:#4a4a00; color:#ffff88; }
+  .h { background:#4d0000; color:#ffaaaa; }
+  .bus-area { flex-shrink: 0; }
+  .bus-card { padding: 2% 3%; border-bottom: 2px solid #1e1e1e; }
+  .order-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .order-jp { font-size: 2.2vw; color: #c8dff8; font-weight: 600; }
+  .order-en { font-size: 1.6vw; color: #8ab4d8; }
+  .depart-time { background:#fff; color:#111; font-family:monospace; font-size:3.8vw; font-weight:700; padding:2px 10px; border-radius:3px; }
+  .dest-jp { font-size: 5.5vw; font-weight: 700; color: #fff; line-height: 1.2; }
+  .dest-en { font-size: 1.8vw; color: #c0c0c0; margin-bottom: 3px; }
+  .via-line { font-size: 2vw; color: #d0d0d0; }
+  .countdown-bar { margin-top: 6px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; }
+  .cd-jp { font-size: 2.4vw; color: #f5c518; font-weight: 600; }
+  .cd-min { font-size: 5vw; font-weight: 700; font-family: monospace; color: #f5c518; }
+  .cd-en { font-size: 1.8vw; color: #c8a020; margin-left: auto; }
+  .cd-soon { font-size: 3.2vw; font-weight: 700; color: #ff6b35; }
+  .no-bus { padding: 5% 4%; text-align: center; color: #888; font-size: 2.5vw; line-height: 2; }
+  .ad-area { flex: 1; display: flex; flex-direction: column; background: #0d0d0d; overflow: hidden; min-height: 0; }
+  .ad-label { font-size: 1.5vw; color: #555; text-align: center; padding: 3px; letter-spacing: 2px; flex-shrink: 0; }
+  .ad-slot { flex: 1; display: flex; align-items: stretch; justify-content: center; overflow: hidden; min-height: 0; }
+  .ad-slot ins { display: block; width: 100%; }
+  .footer { background: #080808; font-size: 1.6vw; color: #888; text-align: center; padding: 4px 8px; flex-shrink: 0; line-height: 1.7; border-top: 1px solid #1e1e1e; }
+  .tt-btn { position: absolute; bottom: 2.5%; right: 2.5%; background: rgba(27,79,160,0.95); color: #fff; border: none; border-radius: 20px; padding: 1% 2.5%; font-size: 2vw; font-family: 'Hiragino Sans','Noto Sans JP',sans-serif; cursor: pointer; display: flex; align-items: center; gap: 5px; z-index: 10; }
+  .tt-btn:active { opacity: 0.75; }
+  .tt-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; align-items: flex-end; justify-content: center; }
+  .tt-overlay.open { display: flex; }
+  .tt-modal { background: #181818; border-radius: 12px 12px 0 0; border-top: 2px solid #2a4a80; width: 100%; max-height: 78%; overflow-y: auto; padding: 3% 3% 4%; }
+  .tt-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .tt-modal-title { font-size: 2.4vw; font-weight: 600; color: #fff; }
+  .tt-close { background: #333; border: none; color: #ccc; border-radius: 50%; width: 5vw; height: 5vw; font-size: 2.5vw; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .day-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .day-tab { flex:1; padding:3px; text-align:center; font-size:2.2vw; border-radius:5px; cursor:pointer; border:1px solid #444; background:#222; color:#ccc; font-family:'Hiragino Sans','Noto Sans JP',sans-serif; }
+  .day-tab.active { background:#1b4fa0; color:#fff; border-color:#1b4fa0; }
+  .tt-table { width:100%; border-collapse:collapse; font-size:2.2vw; }
+  .tt-table th { background:#1e3a5f; color:#c8dff8; padding:4px 8px; text-align:left; font-weight:500; font-size:2vw; }
+  .tt-table td { padding:4px 8px; border-top:1px solid #252525; color:#e8e8e8; font-family:monospace; }
+  .tt-table tr.now-row td { background:#1a2a1a; }
+  .tt-table td.past { color:#555; }
+  .tt-table td.next { color:#f5c518; font-weight:700; }
+  .tt-table td.hour { color:#aaa; }
+  .tt-note { font-size:1.8vw; color:#777; margin-top:8px; line-height:1.7; }
+</style>
+
+<div class="kiosk-outer">
+  <div class="header">
+    <div>
+      <div class="header-carrier">宮崎交通</div>
+      <div class="header-stop">本郷団地入口</div>
+      <div class="header-sub">→ 宮交シティ方面</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="clock" id="clock">--:--</div>
+      <div><span class="day-badge" id="day-badge">--</span></div>
+    </div>
+  </div>
+
+  <div class="bus-area" id="bus-area"></div>
+
+  <div class="ad-area">
+    <div class="ad-label">ADVERTISEMENT</div>
+    <div class="ad-slot">
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9444025533072997" crossorigin="anonymous"></script>
+      <ins class="adsbygoogle"
+           style="display:block;width:100%;height:100%;"
+           data-ad-client="ca-pub-9444025533072997"
+           data-ad-slot="1278124587"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+  </div>
+
+  <div class="footer">
+    宮崎交通 お客様バス案内センター：0570-039-385　／　時刻は目安です。遅延が生じる場合があります。
+  </div>
+
+  <button class="tt-btn" onclick="openTT()">
+    <svg viewBox="0 0 16 16" fill="none" style="width:2vw;height:2vw;min-width:10px;min-height:10px;">
+      <rect x="1" y="1" width="14" height="14" rx="2" stroke="white" stroke-width="1.5"/>
+      <line x1="4" y1="5" x2="12" y2="5" stroke="white" stroke-width="1.2"/>
+      <line x1="4" y1="8" x2="12" y2="8" stroke="white" stroke-width="1.2"/>
+      <line x1="4" y1="11" x2="9" y2="11" stroke="white" stroke-width="1.2"/>
+    </svg>
+    時刻表
+  </button>
+
+  <div class="tt-overlay" id="tt-overlay" onclick="closeTTbg(event)">
+    <div class="tt-modal">
+      <div class="tt-modal-header">
+        <span class="tt-modal-title">本郷団地入口 時刻表（宮交シティ方面）</span>
+        <button class="tt-close" onclick="closeTT()">✕</button>
+      </div>
+      <div class="day-tabs">
+        <button class="day-tab" id="dtab-w" onclick="setTTDay('w')">平日</button>
+        <button class="day-tab" id="dtab-s" onclick="setTTDay('s')">土曜</button>
+        <button class="day-tab" id="dtab-h" onclick="setTTDay('h')">日祝</button>
+      </div>
+      <table class="tt-table">
+        <thead><tr><th>時</th><th>発車時刻（分）</th></tr></thead>
+        <tbody id="tt-body"></tbody>
+      </table>
+      <div class="tt-note">※ 2026年3月31日まで有効<br>※ 天候・交通事情により遅延が生じる場合があります。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const schedules = {
+  w: { 9:[10], 10:[36,40], 12:[6,40], 13:[35], 15:[5,40], 16:[35], 17:[35] },
+  s: { 10:[36], 12:[6] },
+  h: { 10:[36], 12:[6] }
+};
+function getDayType() { const d=new Date().getDay(); return d===0?'h':d===6?'s':'w'; }
+function toMins(h,m) { return h*60+m; }
+function pad(n) { return String(n).padStart(2,'0'); }
+function getBuses30(dt) {
+  const now=new Date(), cur=toMins(now.getHours(),now.getMinutes());
+  const all=[];
+  for (const [h,ms] of Object.entries(schedules[dt]))
+    for (const m of ms) all.push({h:parseInt(h),m,total:toMins(parseInt(h),m)});
+  all.sort((a,b)=>a.total-b.total);
+  return all.filter(b=>b.total>=cur && b.total-cur<=30);
+}
+const orderLabels=[['先発','First'],['次発','Next'],['3本目','3rd'],['4本目','4th']];
+function renderBusCard(bus,idx,cur) {
+  const diff=bus.total-cur;
+  const [jp,en]=orderLabels[idx]||['次発','Next'];
+  const cd=diff<=0
+    ?`<div class="countdown-bar"><span class="cd-soon">間もなく到着</span><span class="cd-en">Arriving soon</span></div>`
+    :`<div class="countdown-bar"><span class="cd-jp">あと</span><span class="cd-min">${diff}</span><span class="cd-jp">分</span><span class="cd-en">in ${diff} min</span></div>`;
+  return `<div class="bus-card">
+    <div class="order-row">
+      <div><div class="order-jp">${jp}</div><div class="order-en">${en}</div></div>
+      <div class="depart-time">${pad(bus.h)}:${pad(bus.m)}発</div>
+    </div>
+    <div class="dest-jp">宮交シティ</div>
+    <div class="dest-en">Miyakou City Terminal</div>
+    <div class="via-line">経由　中野 / 宮崎駅前</div>
+    ${cd}
+  </div>`;
+}
+function updateBus() {
+  const now=new Date();
+  document.getElementById('clock').textContent=pad(now.getHours())+':'+pad(now.getMinutes());
+  const dt=getDayType();
+  const badge=document.getElementById('day-badge');
+  badge.textContent=dt==='w'?'平日':dt==='s'?'土曜':'日祝';
+  badge.className='day-badge '+dt;
+  const cur=toMins(now.getHours(),now.getMinutes());
+  const buses=getBuses30(dt);
+  const area=document.getElementById('bus-area');
+  area.innerHTML=buses.length===0
+    ?`<div class="no-bus">―<br>30分以内の発車はありません<br><span style="font-size:1.8vw;">No buses within 30 minutes</span></div>`
+    :buses.map((b,i)=>renderBusCard(b,i,cur)).join('');
+}
+let ttDay=getDayType();
+function renderTT() {
+  const now=new Date(), cur=toMins(now.getHours(),now.getMinutes());
+  const dt=getDayType();
+  const sch=schedules[ttDay];
+  const hours=[9,10,11,12,13,14,15,16,17,18];
+  const next=getBuses30(dt)[0];
+  let html='';
+  for (const h of hours) {
+    const ms=sch[h]||[];
+    const isNowHour=(ttDay===dt)&&(now.getHours()===h);
+    const minsHtml=ms.length===0
+      ?'<td style="color:#444;">―</td>'
+      :ms.map(m=>{
+        const tot=toMins(h,m);
+        let cls='';
+        if(ttDay===dt && tot<cur) cls='past';
+        else if(ttDay===dt && next && h===next.h && m===next.m) cls='next';
+        return `<td class="${cls}">${pad(m)}</td>`;
+      }).join('');
+    html+=`<tr class="${isNowHour?'now-row':''}"><td class="hour">${h}</td>${minsHtml}</tr>`;
+  }
+  document.getElementById('tt-body').innerHTML=html;
+  ['w','s','h'].forEach(d=>{
+    document.getElementById('dtab-'+d).className='day-tab'+(d===ttDay?' active':'');
+  });
+}
+function setTTDay(d) { ttDay=d; renderTT(); }
+function openTT() { document.getElementById('tt-overlay').classList.add('open'); renderTT(); }
+function closeTT() { document.getElementById('tt-overlay').classList.remove('open'); }
+function closeTTbg(e) { if(e.target===document.getElementById('tt-overlay')) closeTT(); }
+updateBus();
+setInterval(updateBus, 10000);
+</script>
